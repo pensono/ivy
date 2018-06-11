@@ -24,9 +24,9 @@ checked_assert = iu.Parameter("assert","",check=lambda s: len(s.split(':'))==2,
                               process=p_c_a)
 
 class Schema(AST):
-    def __init__(self,defn,fresh):
-        self.defn,self.fresh = defn,fresh
-        self.args = [defn,fresh]
+    def __init__(self,defn):
+        self.defn,self.fresh = defn,[]
+        self.args = [defn]
         self.instances = []
     def __str__(self):
         res = repr(self.defn)
@@ -779,6 +779,8 @@ class IfAction(Action):
     def int_update(self,domain,pvars):
 #        update = self.args[1].int_update(domain,pvars)
 #        return condition_update_on_fmla(update,self.args[0],domain.relations)
+        if used_variables_ast(self.args[0]):
+            raise IvyError(self,'variables in "if" conditions must be explicitly quantified')
         if not isinstance(self.args[0],ivy_ast.Some):
             if not is_boolean(self.args[0]):
                 raise IvyError(self,'condition must be boolean') 

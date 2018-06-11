@@ -3,6 +3,8 @@
   - install
   - language
   - commands
+  - decidability
+  - proving
 - title: IVy by example
   docs:
   - examples/client_server_example
@@ -12,6 +14,9 @@
   - examples/helloworld
   - examples/networking
   - examples/values
+  - examples/list_reverse
+  - examples/indexset
+  - examples/window
 - title: Sharded Hash Table
   docs:
   - examples/sht/sharded_hash_table

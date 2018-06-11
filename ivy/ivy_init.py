@@ -78,7 +78,7 @@ def source_file(fn,f,**kwargs):
 
         if hasattr(e, 'source_location'):
             print e.source_location.context_line
-            if hasattr(e.source_location, 'column'):
+            if e.source_location.column:
                 print ' ' * (e.source_location.column - 1) + '^'
         sys.exit(1)
 

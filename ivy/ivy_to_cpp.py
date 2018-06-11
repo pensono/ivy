@@ -19,7 +19,8 @@ import ivy_ast
 import itertools
 import ivy_cpp
 import ivy_cpp_types
-import ivy_theory as ith
+import ivy_fragment as ifc
+
 
 from collections import defaultdict
 from operator import mul
@@ -371,7 +372,7 @@ thunk_counter = 0
 
 
 def expr_to_z3(expr):
-    fmla = '(assert ' + slv.formula_to_z3(expr).sexpr().replace('|!1','!1|').replace('\n',' "\n"') + ')'
+    fmla = '(assert ' + slv.formula_to_z3(expr).sexpr().replace('|!1','!1|').replace('\\|','').replace('\n',' "\n"') + ')'
     return 'z3::expr(g.ctx,Z3_parse_smtlib2_string(ctx, "{}", sort_names.size(), &sort_names[0], &sorts[0], decl_names.size(), &decl_names[0], &decls[0]))'.format(fmla)
 
 
@@ -702,7 +703,7 @@ public:
     for ldf in im.relevant_definitions(ilu.symbols_asts(constraints)):
         constraints.append(fix_definition(ldf.formula).to_constraint())
     for c in constraints:
-        fmla = slv.formula_to_z3(c).sexpr().replace('|!1','!1|').replace('\n',' "\n"')
+        fmla = slv.formula_to_z3(c).sexpr().replace('|!1','!1|').replace('\\|','').replace('\n',' "\n"')
         indent(impl)
         impl.append("  {}\\\n".format(fmla))
     indent(impl)
@@ -835,7 +836,7 @@ def emit_action_gen(header,impl,name,action,classname):
         emit_decl(impl,sym)
     
     indent(impl)
-    impl.append('add("(assert {})");\n'.format(slv.formula_to_z3(pre).sexpr().replace('|!1','!1|').replace('\n',' "\n"')))
+    impl.append('add("(assert {})");\n'.format(slv.formula_to_z3(pre).sexpr().replace('|!1','!1|').replace('\\|','').replace('\n',' "\n"')))
 #    impl.append('__ivy_modelfile << slvr << std::endl;\n')
     indent_level -= 1
     impl.append("}\n");
@@ -4323,7 +4324,6 @@ emit_main = True
 def main():
     ia.set_determinize(True)
     slv.set_use_native_enums(True)
-    iso.set_interpret_all_sorts(True)
     ivy_init.read_params()
     iu.set_parameters({'coi':'false',"create_imports":'true',"enforce_axioms":'true','ui':'none','isolate_mode':'test','assume_invariants':'false'})
     if target.get() == "gen":
@@ -4340,9 +4340,12 @@ def main():
     with im.Module():
         ivy_init.ivy_init(create_isolate=False)
 
+        if iu.version_le(iu.get_string_version(),"1.6"):
+            iso.set_interpret_all_sorts(True)
+
         isolate = ic.isolate.get()
-        if isolate != None:
-            isolates = [isolate]
+        if isolate == None:
+            isolates = []
         else:
             if isolate == 'all':
                 if target.get() == 'repl':
@@ -4352,10 +4355,13 @@ def main():
             else:
                 isolates = [isolate]
                 
-            if len(isolates) == 0:
+        if len(isolates) == 0:
+            if iu.version_le(iu.get_string_version(),"1.6"):
                 isolates = [None]
+            else:
+                isolates = ['this']
 
-        for the_isolate in isolates:
+        for isolate in isolates:
             with im.module.copy():
                 with iu.ErrorPrinter():
 
@@ -4363,12 +4369,20 @@ def main():
                         if len(isolates) > 1:
                             print "Compiling isolate {}...".format(isolate)
 
+                    if (not iu.version_le(iu.get_string_version(),"1.6") and
+                        target.get() == 'repl' and isolate in im.module.isolates):
+                        the_iso = im.module.isolates[isolate]
+                        if not isinstance(the_iso,ivy_ast.ExtractDef):
+                            the_iso = ivy_ast.ExtractDef(*the_iso.args)
+                            the_iso.with_args = len(the_iso.args)
+                            im.module.isolates[isolate] = the_iso
+                        
                     iso.create_isolate(isolate) # ,ext='ext'
 
                     im.module.labeled_axioms.extend(im.module.labeled_props)
                     im.module.labeled_props = []
                     if target.get() != 'repl':
-                        ith.check_theory(True)
+                        ifc.check_fragment(True)
                     with im.module.theory_context():
                         basename = opt_classname.get() or im.module.name
                         if len(isolates) > 1:
