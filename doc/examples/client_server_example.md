@@ -310,7 +310,7 @@ means that the pattern can actually occur.
 
 # Debugging
 
-To see details of the execution path, we left-click on the action
+To see details of the execution path, we left-click (right-click on Windows) on the action
 `ext` and select `Decompose`. This breaks down an action into smaller
 actions. In this case, we see that the environment has decided to call
 the exported action `connect`:
