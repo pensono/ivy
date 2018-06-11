@@ -197,8 +197,9 @@ def t_NATIVEQUOTE(t):
     return t
 
 class TokenErrorNode(object):
-    def __init__(self,token):
-        self.lineno = iu.Location(iu.filename,token.lineno)
+    def __init__(self, token):
+        self.lineno = iu.Location.from_token(token)
+
 
 def t_error(t):
     raise iu.IvyError(TokenErrorNode(t),"illegal character '{}'".format(t.value[0]))

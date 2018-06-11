@@ -77,24 +77,26 @@ else:
 
 
 class ParseError(Exception):
-    def __init__(self,lineno,token,message):
-#        print "initializing"
-        self.lineno, self.token,self.message = lineno,token,message
-        if iu.filename:
-            self.filename = iu.filename
+    def __init__(self, token, message):
+        self.message = message
+        self.token_value = token.value
+        self.source_location = iu.Location.from_token(token)
+
     def __repr__(self):
-        return ( ("{}".format(self.filename) if hasattr(self,'filename') else '')
-                 + ("({})".format(self.lineno) if self.lineno != None else '')
-                 + (': ' if (hasattr(self,'filename') or self.lineno != None) else '')
+        # TODO Some of this formatting be moved into the Location class
+        return ( ("{}".format(self.source_location.filename) if self.source_location.filename is not None else '')
+                 + ("({})".format(self.source_location.lineno) if self.source_location.lineno is not None else '')
+                 + (': ' if (hasattr(self, 'filename') or self.source_location.lineno is not None) else '')
                  + ('error: ')
-                 + ("token '{}': ".format(self.token) if self.token != None else '')
-                 + self.message )
-    
+                 + ("token '{}': ".format(self.token_value) if self.token_value is not None else '')
+                 + self.message)
+
+
 class Redefining(ParseError):
-    def __init__(self,name,lineno,orig_lineno):
+    def __init__(self, name, lineno, original_lineno):
         msg = 'redefining ' + str(name)
-        if orig_lineno != None:
-            msg += " (from {})".format(str(orig_lineno)[:-2])
+        if original_lineno is not None:
+            msg += " (from {})".format(str(original_lineno)[:-2])
         line = lineno.line if hasattr(lineno,"line") else lineno
         super(Redefining, self).__init__(line,None,msg)
 
@@ -102,11 +104,14 @@ error_list = []
 
 stack = []
 
-def get_lineno(p,n):
-    return iu.Location(iu.filename,p.lineno(n))
+
+def get_lineno(p, n):
+    return iu.Location(iu.filename, p.lineno(n))
+
 
 def report_error(error):
     error_list.append(error)
+
 
 def stack_lookup(name):
     for ivy in reversed(stack):
@@ -1344,7 +1349,7 @@ def parse_nativequote(p,n):
     loc = get_lineno(p,n)
     for idx,e in enumerate(eols[:-1]):
         seols += e
-        bqs[idx].lineno = iu.Location(loc.filename,loc.line+seols)
+        bqs[idx].lineno = iu.Location(loc.filename, loc.line + seols)
     if len(fields) %2 != 1:
         thing = Atom("")
         thing.lineno = loc
@@ -2056,9 +2061,10 @@ def p_state_expr_entry(p):
 
 from ivy_logic_parser import *
 
+
 def p_error(token):
     if token is not None:
-        report_error(ParseError(token.lineno,token.value,"syntax error"))
+        report_error(ParseError(token, "syntax error"))
     else:
         report_error(ParseError(None,None,'unexpected end of input'));
     # TEMORARY: parser goes into into infinite loop on recovery from parse errors
@@ -2073,7 +2079,8 @@ parser = yacc.yacc(start='top',tabmodule='ivy_parsetab',errorlog=yacc.NullLogger
 #parser = yacc.yacc(start='top',tabmodule='ivy_parsetab')
 # formula_parser = yacc.yacc(start = 'fmla', tabmodule='ivy_formulatab')
 
-def parse(s,nested=False):
+
+def parse(s, nested=False):
     global error_list
     global stack
     if not nested:
@@ -2082,7 +2089,8 @@ def parse(s,nested=False):
     vernum = iu.get_numeric_version()
     with LexerVersion(vernum):
         # shallow copy the parser and lexer to try for re-entrance (!!!)
-        res = copy.copy(parser).parse(s,lexer=copy.copy(lexer))
+        lexer_copy = copy.copy(lexer)
+        res = copy.copy(parser).parse(s, lexer=lexer_copy)
     if error_list:
         raise iu.ErrorList(error_list)
     return res

@@ -1,0 +1,5 @@
+#lang ivy1.7
+type nat
+relation test(A: nat, B: nat)
+
+conjecture test(1)

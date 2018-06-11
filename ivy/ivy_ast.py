@@ -1347,21 +1347,21 @@ class Range(AST):
     def card(self):
         return int(self.hi) - int(self.lo) + 1
 
+
 class ASTContext(object):
     """ ast compiling context, handles line numbers """
-    def __init__(self,ast):
+    def __init__(self, ast):
         self.ast = ast
+
     def __enter__(self):
         return self
-    def __exit__(self,exc_type, exc_val, exc_tb):
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         if isinstance(exc_val,ivy_logic.Error):
-#            assert False
-            raise IvyError(self.ast,str(exc_val))
+            raise IvyError(self.ast, str(exc_val))
         if exc_type == IvyError:
-#            print "no lineno: {}".format(self.ast)
-            needs_lineno = not exc_val.lineno.line
-            if needs_lineno and hasattr(self.ast,'lineno'):
-#                print "lineno: {}".format(self.ast.lineno)
-                exc_val.lineno = self.ast.lineno
-        return False # don't block any exceptions
+            needs_location = not exc_val.source_location.line
+            if needs_location and hasattr(self.ast, 'lineno'):
+                exc_val.source_location = self.ast.lineno
+        return False  # don't block any exceptions
 

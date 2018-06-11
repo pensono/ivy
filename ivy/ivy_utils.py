@@ -216,20 +216,50 @@ class SourceFile(object):
 filename = None
 
 
-def Location(filename=None,line=None):
-    return LocationTuple([filename,line])
+# From http://www.dabeaz.com/ply/ply.html#ply_nn9
+def find_column_number(source_code, position):
+    """
+    :param token: a token instance
+    :return: Column number of the beginning of the token in that string
+    """
 
-class LocationTuple(tuple):
+    line_start = source_code.rfind('\n', 0, position) + 1
+
+    tabs = source_code.count('\t', line_start, position)
+    TAB_SIZE = 4 - 1
+
+    return (position - line_start) + 1 + tabs * TAB_SIZE
+
+
+# Does this need to subclass tuple?
+class Location:
+    # It would be nice if these properties were required
+    def __init__(self, filename=None, line=None, column=None):
+        self._filename = filename
+        self._line = line
+        self._column = column
+
     @property
     def filename(self):
-        return self[0]
+        return self._filename
+
     @property
     def line(self):
-        return self[1]
+        return self._line
+
+    @property
+    def column(self):
+        return self._column
+
+    @classmethod
+    def from_token(cls, token):
+        global filename
+        return Location(filename, token.lineno, find_column_number(token.lexer.lexdata, token.lexpos))
+
     def __str__(self):
         if platform.system() == 'Windows':
-            res =  (((str(self.filename)) if self.filename else '')
-                    + ('(' + str(self.line) + ')') if self.line else '')
+            res = (((str(self.filename)) if self.filename else '')
+                    + ('(' + str(self.line) + (':' + str(self.column) if self.column else '') + ')') if self.line else '')
             if res:
                 res += ': '
         else:
@@ -238,6 +268,8 @@ class LocationTuple(tuple):
                 res += str(self.filename) + ': '
             if self.line:
                 res += 'line ' + str(self.line) + ': '
+                if self.column:
+                    res += 'column ' + str(self.column) + ': '
         return res
 
 def lineno_str(ast):
@@ -250,13 +282,13 @@ def lineno_str(ast):
 
 class IvyError(Exception):
     def __init__(self,ast,msg):
-        self.lineno = ast.lineno if hasattr(ast,'lineno') else Location()
+        self.source_location = ast.lineno if hasattr(ast, 'lineno') else Location()
         self.msg = msg
         if not catch.get():
             print str(self)
             assert False
     def __str__(self):
-        return str(self.lineno) + 'error: ' + self.msg
+        return str(self.source_location) + 'error: ' + self.msg
     def __repr__(self):
         return str(self)
 

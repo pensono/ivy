@@ -1,0 +1,5 @@
+#lang ivy1.7
+type nat
+
+# Symbol names must be uppercase
+relation test(a: nat, b: nat)

@@ -361,7 +361,6 @@ def p_optargs_lp_args_rp(p):
     
 class ParseError(Exception):
     def __init__(self,lineno,token,message):
-#        print "initializing"
         self.lineno, self.token,self.message = lineno,token,message
         if iu.filename:
             self.filename = iu.filename
@@ -375,15 +374,12 @@ error_list = []
 
 stack = []
 
-def get_lineno(p,n):
-    return iu.Location(iu.filename,p.lineno(n))
-
 def report_error(error):
     error_list.append(error)
 
 def p_error(token):
     if token is not None:
-        report_error(ParseError(token.lineno,token.value,"syntax error"))
+        report_error(ParseError(token,"syntax error"))
     else:
         report_error(ParseError(None,None,'unexpected end of input'));
 
