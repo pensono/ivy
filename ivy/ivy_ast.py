@@ -1416,15 +1416,12 @@ class Range(AST):
     def card(self):
         return int(self.hi) - int(self.lo) + 1
 
-
 class ASTContext(object):
     """ ast compiling context, handles line numbers """
-    def __init__(self, ast):
+    def __init__(self,ast):
         self.ast = ast
-
     def __enter__(self):
         return self
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         if isinstance(exc_val,ivy_logic.Error):
             raise IvyError(self.ast, str(exc_val))

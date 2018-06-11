@@ -77,7 +77,8 @@ else:
 
 
 class ParseError(Exception):
-    def __init__(self, token, message):
+    def __init__(self,token,message):
+#        print "initializing"
         self.message = message
         self.token_value = token.value
         self.source_location = iu.Location.from_token(token)
@@ -93,7 +94,7 @@ class ParseError(Exception):
 
 
 class Redefining(ParseError):
-    def __init__(self, name, lineno, original_lineno):
+    def __init__(self,name,lineno,original_lineno):
         msg = 'redefining ' + str(name)
         if original_lineno is not None:
             msg += " (from {})".format(str(original_lineno)[:-2])
@@ -104,14 +105,11 @@ error_list = []
 
 stack = []
 
-
 def get_lineno(p, n):
     return iu.Location(iu.filename, p.lineno(n))
 
-
 def report_error(error):
     error_list.append(error)
-
 
 def stack_lookup(name):
     for ivy in reversed(stack):
@@ -1515,7 +1513,7 @@ def parse_nativequote(p,n):
     loc = get_lineno(p,n)
     for idx,e in enumerate(eols[:-1]):
         seols += e
-        bqs[idx].lineno = iu.Location(loc.filename, loc.line + seols)
+        bqs[idx].lineno = iu.Location(loc.filename,loc.line+seols)
     if len(fields) %2 != 1:
         thing = Atom("")
         thing.lineno = loc
@@ -2245,8 +2243,7 @@ parser = yacc.yacc(start='top',tabmodule='ivy_parsetab',errorlog=yacc.NullLogger
 #parser = yacc.yacc(start='top',tabmodule='ivy_parsetab')
 # formula_parser = yacc.yacc(start = 'fmla', tabmodule='ivy_formulatab')
 
-
-def parse(s, nested=False):
+def parse(s,nested=False):
     global error_list
     global stack
     if not nested:

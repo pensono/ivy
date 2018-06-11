@@ -1570,17 +1570,21 @@ def ivy_compile(decls,mod=None,create_isolate=True,**kwargs):
         mod.type_check()
         # try instantiating all the actions to type check them
         for name,action in mod.actions.iteritems():
+#            print "checking: {} = {}".format(name,action)
             type_check_action(action,mod)
             if not hasattr(action,'lineno'):
                 print "no lineno: {}".format(name)
             assert hasattr(action,'formal_params'), action
     
         # from version 1.7, there is always one global "isolate"
-        if not iu.version_le(iu.get_string_version(), "1.6"):
+        if not iu.version_le(iu.get_string_version(),"1.6"):
             if 'this' not in mod.isolates:
                 isol = ivy_ast.IsolateDef(ivy_ast.Atom('this'),ivy_ast.Atom('this'))
                 isol.with_args = 0
                 mod.isolates['this'] = isol
+            # print "actions:"
+            # for x,y in mod.actions.iteritems():
+            # print iu.pretty("action {} = {}".format(x,y))
 
         create_sort_order(mod)
         check_definitions(mod)
@@ -1602,12 +1606,11 @@ def clear_rules(modname):
         if s.startswith('p_'):
             del d[s]
 
-
 def read_module(f,nested=False):
     import ivy_logic_parser
     import ivy_parser
     header = f.readline()
-    s = '\n' + f.read()  # newline at beginning to preserve line numbers
+    s = '\n' + f.read() # newline at beginning to preserve line numbers
     header = string.strip(header)
     if header.startswith('#lang ivy'):
         version = header[len('#lang ivy'):]
@@ -1645,7 +1648,7 @@ def import_module(name):
         except Exception:
             raise IvyError(None,"module {} not found in current directory or module path".format(name))
     with iu.SourceFile(fname):
-        mod = read_module(f, nested=True)
+        mod = read_module(f,nested=True)
     return mod
 
 def ivy_load_file(f,**kwargs):

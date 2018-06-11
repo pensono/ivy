@@ -227,7 +227,7 @@ class SourceFile(object):
 filename = None
 
 
-def line_information(source_code, position):
+def line_information(source_code,position):
     """
     :param source_code: The source code the position is in
     :param position: The number of characters in source_code to count from
@@ -236,16 +236,14 @@ def line_information(source_code, position):
 
     # Inspired by http://www.dabeaz.com/ply/ply.html#ply_nn9
 
-    line_start = source_code.rfind('\n', 0, position)
-    line_end = source_code.find('\n', position)
+    line_start = source_code.rfind('\n',0,position)
+    line_end = source_code.find('\n',position)
 
-    tabs = source_code.count('\t', line_start, position)
+    tabs = source_code.count('\t',line_start,position)
     TAB_SIZE = 4 - 1  # Just assume the tab size is 4
 
     return (position - line_start) + tabs * TAB_SIZE, source_code[line_start:line_end]
 
-
-# Does this need to subclass tuple?
 class Location:
     # It would be nice if these properties were required
     def __init__(self, filename=None, line=None, column=None, context_line = None):
@@ -302,7 +300,7 @@ def lineno_str(ast):
 
 class IvyError(Exception):
     def __init__(self,ast,msg):
-        self.source_location = ast.lineno if hasattr(ast, 'lineno') else Location()
+        self.source_location = ast.lineno if hasattr(ast,'lineno') else Location()
         self.msg = msg
         if not catch.get():
             print str(self)
