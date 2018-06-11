@@ -216,28 +216,32 @@ class SourceFile(object):
 filename = None
 
 
-# From http://www.dabeaz.com/ply/ply.html#ply_nn9
-def find_column_number(source_code, position):
+def line_information(source_code, position):
     """
-    :param token: a token instance
-    :return: Column number of the beginning of the token in that string
+    :param source_code: The source code the position is in
+    :param position: The number of characters in source_code to count from
+    :return: Column number of the position in the string, and the entire line that that position occurs on
     """
 
-    line_start = source_code.rfind('\n', 0, position) + 1
+    # Inspired by http://www.dabeaz.com/ply/ply.html#ply_nn9
+
+    line_start = source_code.rfind('\n', 0, position)
+    line_end = source_code.find('\n', position)
 
     tabs = source_code.count('\t', line_start, position)
-    TAB_SIZE = 4 - 1
+    TAB_SIZE = 4 - 1  # Just assume the tab size is 4
 
-    return (position - line_start) + 1 + tabs * TAB_SIZE
+    return (position - line_start) + tabs * TAB_SIZE, source_code[line_start:line_end]
 
 
 # Does this need to subclass tuple?
 class Location:
     # It would be nice if these properties were required
-    def __init__(self, filename=None, line=None, column=None):
+    def __init__(self, filename=None, line=None, column=None, context_line = None):
         self._filename = filename
         self._line = line
         self._column = column
+        self._context_line = context_line
 
     @property
     def filename(self):
@@ -251,10 +255,15 @@ class Location:
     def column(self):
         return self._column
 
+    @property
+    def context_line(self):
+        return self._context_line
+
     @classmethod
     def from_token(cls, token):
         global filename
-        return Location(filename, token.lineno, find_column_number(token.lexer.lexdata, token.lexpos))
+        column_number, context_line = line_information(token.lexer.lexdata, token.lexpos)
+        return Location(filename, token.lineno, column_number, context_line)
 
     def __str__(self):
         if platform.system() == 'Windows':

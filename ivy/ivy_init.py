@@ -75,6 +75,11 @@ def source_file(fn,f,**kwargs):
         if not hasattr(e,'filename'):
             e.filename = fn
         print str(e)
+
+        if hasattr(e, 'source_location'):
+            print e.source_location.context_line
+            if hasattr(e.source_location, 'column'):
+                print ' ' * (e.source_location.column - 1) + '^'
         sys.exit(1)
 
 def ivy_init(**kwargs):

@@ -7,7 +7,8 @@ import ivy_logic_utils
 import ivy_utils as iu
 
 def get_lineno(p,n):
-    return iu.Location(iu.filename, p.lineno(n), iu.find_column_number(p.lexer.lexdata, p.lexpos(n)))
+    column_number, context_line = iu.line_information(p.lexer.lexdata, p.lexpos(n))
+    return iu.Location(iu.filename, p.lineno(n), column_number, context_line)
 
 def symbol(s):
     return Variable(s,universe) if str.isupper(s[0]) else Constant(s)
